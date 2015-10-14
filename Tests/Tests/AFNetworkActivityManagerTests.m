@@ -1,6 +1,5 @@
 // AFNetworkActivityManagerTests.m
-//
-// Copyright (c) 2013-2015 AFNetworking (http://afnetworking.com)
+// Copyright (c) 2011–2015 Alamofire Software Foundation (http://alamofire.org/)
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,12 +22,11 @@
 #import "AFTestCase.h"
 
 #import "AFNetworkActivityIndicatorManager.h"
-#import "AFHTTPRequestOperation.h"
+#import "AFHTTPSessionManager.h"
 
 @interface AFNetworkActivityManagerTests : AFTestCase
 @property (nonatomic, strong) AFNetworkActivityIndicatorManager *networkActivityIndicatorManager;
-@property (nonatomic, assign) BOOL isNetworkActivityIndicatorVisible;
-@property (nonatomic, strong) id mockApplication;
+@property (nonatomic, strong) AFHTTPSessionManager *sessionManager;
 @end
 
 #pragma mark -
@@ -38,63 +36,63 @@
 - (void)setUp {
     [super setUp];
 
+    self.sessionManager = [[AFHTTPSessionManager alloc] initWithBaseURL:self.baseURL sessionConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration]];
+
     self.networkActivityIndicatorManager = [[AFNetworkActivityIndicatorManager alloc] init];
     self.networkActivityIndicatorManager.enabled = YES;
+}
 
-    self.mockApplication = [OCMockObject mockForClass:[UIApplication class]];
-    [[[self.mockApplication stub] andReturn:self.mockApplication] sharedApplication];
+- (void)tearDown {
+    [super tearDown];
+    self.networkActivityIndicatorManager = nil;
 
-    [[[self.mockApplication stub] andDo:^(NSInvocation *invocation) {
-        [invocation setReturnValue:(void *)&_isNetworkActivityIndicatorVisible];
-    }] isNetworkActivityIndicatorVisible];
-
-    [[[self.mockApplication stub] andDo:^(NSInvocation *invocation) {
-        [invocation getArgument:&_isNetworkActivityIndicatorVisible atIndex:2];
-    }] setNetworkActivityIndicatorVisible:YES];
+    [self.sessionManager invalidateSessionCancelingTasks:YES];
 }
 
 #pragma mark -
 
 - (void)testThatNetworkActivityIndicatorTurnsOffIndicatorWhenRequestSucceeds {
-    NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"/get" relativeToURL:self.baseURL]];
-    AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:request];
-    [operation setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
-        expect([self.mockApplication isNetworkActivityIndicatorVisible]).will.beFalsy();
-    } failure:nil];
+    XCTestExpectation *requestCompleteExpectation = [self expectationWithDescription:@"Request should succeed"];
+    [self.sessionManager
+     GET:@"/delay/1"
+     parameters:nil
+     success:^(NSURLSessionDataTask * _Nonnull task, id  _Nonnull responseObject) {
+         [requestCompleteExpectation fulfill];
+     }
+     failure:nil];
+    [self expectationForPredicate:[NSPredicate predicateWithFormat:@"isNetworkActivityIndicatorVisible == YES"]
+                                               evaluatedWithObject:self.networkActivityIndicatorManager
+                                                           handler:nil];
+    [self waitForExpectationsWithTimeout:10.0 handler:nil];
 
-    [operation start];
-
-    expect([self.mockApplication isNetworkActivityIndicatorVisible]).will.beTruthy();
+    [self expectationForPredicate:[NSPredicate predicateWithFormat:@"isNetworkActivityIndicatorVisible == NO"]
+              evaluatedWithObject:self.networkActivityIndicatorManager
+                          handler:nil];
+    [self waitForExpectationsWithTimeout:5.0 handler:nil];
 }
 
 - (void)testThatNetworkActivityIndicatorTurnsOffIndicatorWhenRequestFails {
-    NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"/status/500" relativeToURL:self.baseURL]];
-    AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:request];
-    [operation setCompletionBlockWithSuccess:nil failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        expect([self.mockApplication isNetworkActivityIndicatorVisible]).will.beFalsy();
-    }];
+    XCTestExpectation *requestCompleteExpectation = [self expectationWithDescription:@"Request should succeed"];
+    [self.sessionManager
+     GET:@"/status/500"
+     parameters:nil
+     success:nil
+     failure:^(NSURLSessionDataTask * _Nonnull task, NSError * _Nonnull error) {
+         [requestCompleteExpectation fulfill];
+     }];
 
-    [operation start];
+    [self
+     keyValueObservingExpectationForObject:self.networkActivityIndicatorManager
+     keyPath:@"isNetworkActivityIndicatorVisible"
+     handler:^BOOL(AFNetworkActivityIndicatorManager * observedObject, NSDictionary * _Nonnull change) {
+         return observedObject.isNetworkActivityIndicatorVisible;
+     }];
+    [self waitForExpectationsWithTimeout:5.0 handler:nil];
 
-    expect([self.mockApplication isNetworkActivityIndicatorVisible]).will.beTruthy();
-}
-
-- (void)testThatNetworkActivityIsUnchangedWhenManagerIsDisabled {
-    self.networkActivityIndicatorManager.enabled = NO;
-
-    __block BOOL didChangeNetworkActivityIndicatorVisible = NO;
-
-    [[[self.mockApplication stub] andDo:^(NSInvocation *invocation) {
-        didChangeNetworkActivityIndicatorVisible = YES;
-    }] setNetworkActivityIndicatorVisible:YES];
-
-    NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"/get" relativeToURL:self.baseURL]];
-    AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:request];
-    [operation setCompletionBlockWithSuccess:nil failure:nil];
-
-    [operation start];
-
-    expect(didChangeNetworkActivityIndicatorVisible).will.beFalsy();
+    [self expectationForPredicate:[NSPredicate predicateWithFormat:@"isNetworkActivityIndicatorVisible == NO"]
+              evaluatedWithObject:self.networkActivityIndicatorManager
+                          handler:nil];
+    [self waitForExpectationsWithTimeout:5.0 handler:nil];
 }
 
 @end
