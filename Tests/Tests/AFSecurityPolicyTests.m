@@ -113,18 +113,6 @@ static SecCertificateRef AFUTSelfSignedCertificateWithDNSNameDomain() {
     return SecCertificateCreateWithData(NULL, (__bridge CFDataRef)(certData));
 }
 
-static NSArray * AFCertificateTrustChainForServerTrust(SecTrustRef serverTrust) {
-    CFIndex certificateCount = SecTrustGetCertificateCount(serverTrust);
-    NSMutableArray *trustChain = [NSMutableArray arrayWithCapacity:(NSUInteger)certificateCount];
-
-    for (CFIndex i = 0; i < certificateCount; i++) {
-        SecCertificateRef certificate = SecTrustGetCertificateAtIndex(serverTrust, i);
-        [trustChain addObject:(__bridge_transfer NSData *)SecCertificateCopyData(certificate)];
-    }
-
-    return [NSArray arrayWithArray:trustChain];
-}
-
 static SecTrustRef AFUTTrustWithCertificate(SecCertificateRef certificate) {
     NSArray *certs  = @[(__bridge id)(certificate)];
 
@@ -199,7 +187,8 @@ static SecTrustRef AFUTTrustWithCertificate(SecCertificateRef certificate) {
 }
 
 - (void)testPolicyWithPublicKeyPinningModeHasHTTPBinOrgPinnedCertificate {
-    AFSecurityPolicy *policy = [AFSecurityPolicy policyWithPinningMode:AFSSLPinningModePublicKey];
+    NSBundle *bundle = [NSBundle bundleForClass:[self class]];
+    AFSecurityPolicy *policy = [AFSecurityPolicy policyWithPinningMode:AFSSLPinningModePublicKey withPinnedCertificates:[AFSecurityPolicy certificatesInBundle:bundle]];
 
     SecCertificateRef cert = AFUTHTTPBinOrgCertificate();
     NSData *certData = (__bridge NSData *)(SecCertificateCopyData(cert));
@@ -320,7 +309,8 @@ static SecTrustRef AFUTTrustWithCertificate(SecCertificateRef certificate) {
 }
 
 - (void)testPolicyWithCertificatePinningModeHasHTTPBinOrgPinnedCertificate {
-    AFSecurityPolicy *policy = [AFSecurityPolicy policyWithPinningMode:AFSSLPinningModeCertificate];
+    NSBundle *bundle = [NSBundle bundleForClass:[self class]];
+    AFSecurityPolicy *policy = [AFSecurityPolicy policyWithPinningMode:AFSSLPinningModeCertificate withPinnedCertificates:[AFSecurityPolicy certificatesInBundle:bundle]];
 
     SecCertificateRef cert = AFUTHTTPBinOrgCertificate();
     NSData *certData = (__bridge NSData *)(SecCertificateCopyData(cert));

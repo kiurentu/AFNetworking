@@ -21,7 +21,7 @@
 
 #import "AFURLRequestSerialization.h"
 
-#if __IPHONE_OS_VERSION_MIN_REQUIRED
+#if TARGET_OS_IOS || TARGET_OS_WATCH || TARGET_OS_TV
 #import <MobileCoreServices/MobileCoreServices.h>
 #else
 #import <CoreServices/CoreServices.h>
@@ -85,11 +85,22 @@ static NSString * AFPercentEscapedStringFromString(NSString *string) {
 
     static NSUInteger const batchSize = 50;
 
+<<<<<<< HEAD
     NSInteger index = 0;
     NSMutableString *escaped = @"".mutableCopy;
 
     while (index < string.length) {
         NSUInteger length = MIN(string.length - index, batchSize);
+=======
+    NSUInteger index = 0;
+    NSMutableString *escaped = @"".mutableCopy;
+
+    while (index < string.length) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wgnu"
+        NSUInteger length = MIN(string.length - index, batchSize);
+#pragma GCC diagnostic pop
+>>>>>>> 8370ccb3d48b60c74e7cf96f0e3e2fea927ceb15
         NSRange range = NSMakeRange(index, length);
 
         // To avoid breaking up character sequences such as 👴🏻👮🏽
@@ -111,14 +122,14 @@ static NSString * AFPercentEscapedStringFromString(NSString *string) {
 @property (readwrite, nonatomic, strong) id field;
 @property (readwrite, nonatomic, strong) id value;
 
-- (id)initWithField:(id)field value:(id)value;
+- (instancetype)initWithField:(id)field value:(id)value;
 
 - (NSString *)URLEncodedStringValue;
 @end
 
 @implementation AFQueryStringPair
 
-- (id)initWithField:(id)field value:(id)value {
+- (instancetype)initWithField:(id)field value:(id)value {
     self = [super init];
     if (!self) {
         return nil;
@@ -591,14 +602,14 @@ forHTTPHeaderField:(NSString *)field
     return YES;
 }
 
-- (id)initWithCoder:(NSCoder *)decoder {
+- (instancetype)initWithCoder:(NSCoder *)decoder {
     self = [self init];
     if (!self) {
         return nil;
     }
 
     self.mutableHTTPRequestHeaders = [[decoder decodeObjectOfClass:[NSDictionary class] forKey:NSStringFromSelector(@selector(mutableHTTPRequestHeaders))] mutableCopy];
-    self.queryStringSerializationStyle = [[decoder decodeObjectOfClass:[NSNumber class] forKey:NSStringFromSelector(@selector(queryStringSerializationStyle))] unsignedIntegerValue];
+    self.queryStringSerializationStyle = (AFHTTPRequestQueryStringSerializationStyle)[[decoder decodeObjectOfClass:[NSNumber class] forKey:NSStringFromSelector(@selector(queryStringSerializationStyle))] unsignedIntegerValue];
 
     return self;
 }
@@ -610,7 +621,7 @@ forHTTPHeaderField:(NSString *)field
 
 #pragma mark - NSCopying
 
-- (id)copyWithZone:(NSZone *)zone {
+- (instancetype)copyWithZone:(NSZone *)zone {
     AFHTTPRequestSerializer *serializer = [[[self class] allocWithZone:zone] init];
     serializer.mutableHTTPRequestHeaders = [self.mutableHTTPRequestHeaders mutableCopyWithZone:zone];
     serializer.queryStringSerializationStyle = self.queryStringSerializationStyle;
@@ -684,7 +695,7 @@ NSTimeInterval const kAFUploadStream3GSuggestedDelay = 0.2;
 @property (readonly, nonatomic, assign) unsigned long long contentLength;
 @property (readonly, nonatomic, assign, getter = isEmpty) BOOL empty;
 
-- (id)initWithStringEncoding:(NSStringEncoding)encoding;
+- (instancetype)initWithStringEncoding:(NSStringEncoding)encoding;
 - (void)setInitialAndFinalBoundaries;
 - (void)appendHTTPBodyPart:(AFHTTPBodyPart *)bodyPart;
 @end
@@ -700,8 +711,8 @@ NSTimeInterval const kAFUploadStream3GSuggestedDelay = 0.2;
 
 @implementation AFStreamingMultipartFormData
 
-- (id)initWithURLRequest:(NSMutableURLRequest *)urlRequest
-          stringEncoding:(NSStringEncoding)encoding
+- (instancetype)initWithURLRequest:(NSMutableURLRequest *)urlRequest
+                    stringEncoding:(NSStringEncoding)encoding
 {
     self = [super init];
     if (!self) {
@@ -893,7 +904,7 @@ NSTimeInterval const kAFUploadStream3GSuggestedDelay = 0.2;
 @synthesize streamError;
 #pragma clang diagnostic pop
 
-- (id)initWithStringEncoding:(NSStringEncoding)encoding {
+- (instancetype)initWithStringEncoding:(NSStringEncoding)encoding {
     self = [super init];
     if (!self) {
         return nil;
@@ -1036,7 +1047,7 @@ NSTimeInterval const kAFUploadStream3GSuggestedDelay = 0.2;
 
 #pragma mark - NSCopying
 
--(id)copyWithZone:(NSZone *)zone {
+- (instancetype)copyWithZone:(NSZone *)zone {
     AFMultipartBodyStream *bodyStreamCopy = [[[self class] allocWithZone:zone] initWithStringEncoding:self.stringEncoding];
 
     for (AFHTTPBodyPart *bodyPart in self.HTTPBodyParts) {
@@ -1073,7 +1084,7 @@ typedef enum {
 
 @implementation AFHTTPBodyPart
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if (!self) {
         return nil;
@@ -1251,7 +1262,7 @@ typedef enum {
 
 #pragma mark - NSCopying
 
-- (id)copyWithZone:(NSZone *)zone {
+- (instancetype)copyWithZone:(NSZone *)zone {
     AFHTTPBodyPart *bodyPart = [[[self class] allocWithZone:zone] init];
 
     bodyPart.stringEncoding = self.stringEncoding;
@@ -1314,7 +1325,7 @@ typedef enum {
 
 #pragma mark - NSSecureCoding
 
-- (id)initWithCoder:(NSCoder *)decoder {
+- (instancetype)initWithCoder:(NSCoder *)decoder {
     self = [super initWithCoder:decoder];
     if (!self) {
         return nil;
@@ -1333,7 +1344,7 @@ typedef enum {
 
 #pragma mark - NSCopying
 
-- (id)copyWithZone:(NSZone *)zone {
+- (instancetype)copyWithZone:(NSZone *)zone {
     AFJSONRequestSerializer *serializer = [super copyWithZone:zone];
     serializer.writingOptions = self.writingOptions;
 
@@ -1393,13 +1404,13 @@ typedef enum {
 
 #pragma mark - NSSecureCoding
 
-- (id)initWithCoder:(NSCoder *)decoder {
+- (instancetype)initWithCoder:(NSCoder *)decoder {
     self = [super initWithCoder:decoder];
     if (!self) {
         return nil;
     }
 
-    self.format = [[decoder decodeObjectOfClass:[NSNumber class] forKey:NSStringFromSelector(@selector(format))] unsignedIntegerValue];
+    self.format = (NSPropertyListFormat)[[decoder decodeObjectOfClass:[NSNumber class] forKey:NSStringFromSelector(@selector(format))] unsignedIntegerValue];
     self.writeOptions = [[decoder decodeObjectOfClass:[NSNumber class] forKey:NSStringFromSelector(@selector(writeOptions))] unsignedIntegerValue];
 
     return self;
@@ -1414,7 +1425,7 @@ typedef enum {
 
 #pragma mark - NSCopying
 
-- (id)copyWithZone:(NSZone *)zone {
+- (instancetype)copyWithZone:(NSZone *)zone {
     AFPropertyListRequestSerializer *serializer = [super copyWithZone:zone];
     serializer.format = self.format;
     serializer.writeOptions = self.writeOptions;
