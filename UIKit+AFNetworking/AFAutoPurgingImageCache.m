@@ -1,5 +1,5 @@
 // AFAutoPurgingImageCache.m
-// Copyright (c) 2011–2015 Alamofire Software Foundation (http://alamofire.org/)
+// Copyright (c) 2011–2016 Alamofire Software Foundation (http://alamofire.org/)
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -67,11 +67,7 @@
 @interface AFAutoPurgingImageCache ()
 @property (nonatomic, strong) NSMutableDictionary <NSString* , AFCachedImage*> *cachedImages;
 @property (nonatomic, assign) UInt64 currentMemoryUsage;
-#if OS_OBJECT_HAVE_OBJC_SUPPORT
 @property (nonatomic, strong) dispatch_queue_t synchronizationQueue;
-#else
-@property (nonatomic, assign) dispatch_queue_t synchronizationQueue;
-#endif
 @end
 
 @implementation AFAutoPurgingImageCache
